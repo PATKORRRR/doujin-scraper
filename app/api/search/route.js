@@ -1,25 +1,41 @@
 import { NextResponse } from 'next/server';
-import { scrapeMangaList, searchManga } from '../../../src/doujindesu.js';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q') || '';
 
   try {
-    let rawData;
+    // 1. Import modul scraper secara dinamis
+    const scraper = await import('../../../src/doujindesu.js').catch(async () => {
+      // Fallback jika path ../.. salah
+      return await import('../../src/doujindesu.js');
+    });
 
-    // Jika pengguna melakukan pencarian
+    let rawData = [];
+
+    // 2. Cek fungsi pencarian atau list yang tersedia di modul
     if (query) {
-      rawData = await searchManga(query);
+      if (typeof scraper.searchManga === 'function') {
+        rawData = await scraper.searchManga(query);
+      } else if (typeof scraper.search === 'function') {
+        rawData = await scraper.search(query);
+      } else if (typeof scraper.default === 'function') {
+        rawData = await scraper.default(query);
+      }
     } else {
-      // Jika pertama kali dibuka (mengambil list awal)
-      rawData = await scrapeMangaList({});
+      if (typeof scraper.scrapeMangaList === 'function') {
+        rawData = await scraper.scrapeMangaList({});
+      } else if (typeof scraper.getLatest === 'function') {
+        rawData = await scraper.getLatest();
+      } else if (typeof scraper.latest === 'function') {
+        rawData = await scraper.latest();
+      }
     }
 
-    // Normalisasi struktur data
+    // 3. Normalisasi hasil response
     const list = Array.isArray(rawData)
       ? rawData
-      : rawData?.mangas || rawData?.list || rawData?.data || [];
+      : rawData?.mangas || rawData?.list || rawData?.data || rawData?.results || [];
 
     const results = list.map((item) => ({
       title: item.title || item.name || 'Tanpa Judul',
@@ -32,7 +48,7 @@ export async function GET(request) {
 
     return NextResponse.json(results);
   } catch (error) {
-    console.error('API Error:', error);
-    return NextResponse.json([], { status: 500 });
+    console.error('API Error Details:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
