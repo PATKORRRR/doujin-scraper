@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { scrapeMangaList, searchManga } from '@/src/doujindesu.js';
+import { scrapeMangaList, searchManga } from '../../../src/doujindesu.js';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
@@ -8,15 +8,12 @@ export async function GET(request) {
   try {
     let rawData = [];
 
-    // Jika ada kata kunci pencarian
     if (query) {
       rawData = await searchManga(query);
     } else {
-      // Tampilan awal (landing page)
       rawData = await scrapeMangaList({});
     }
 
-    // Normalisasi struktur data dari scraper
     const list = Array.isArray(rawData)
       ? rawData
       : rawData?.mangas || rawData?.list || rawData?.data || rawData?.results || [];
