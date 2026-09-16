@@ -6,15 +6,15 @@ export default function Home() {
   const [daftarKomik, setDaftarKomik] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Ambil komik otomatis saat web pertama kali dibuka
+  // Otomatis ambil manga saat pertama kali web dibuka
   useEffect(() => {
-    fetchKomik('');
+    loadAwalManga();
   }, []);
 
-  const fetchKomik = async (queryStr = '') => {
+  const loadAwalManga = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(queryStr)}`);
+      const res = await fetch('/api/manga');
       const data = await res.json();
       setDaftarKomik(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -23,9 +23,22 @@ export default function Home() {
     setLoading(false);
   };
 
-  const cariKomik = (e) => {
+  const cariKomik = async (e) => {
     e.preventDefault();
-    fetchKomik(ketikan);
+    if (!ketikan.trim()) {
+      loadAwalManga();
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/search?q=${encodeURIComponent(ketikan)}`);
+      const data = await res.json();
+      setDaftarKomik(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+    }
+    setLoading(false);
   };
 
   return (
@@ -82,15 +95,15 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Main Container */}
+      {/* Main Content */}
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 20px' }}>
         
         <div style={{ marginBottom: '32px' }}>
           <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#f43f5e', textTransform: 'uppercase', letterSpacing: '1px', backgroundColor: 'rgba(244, 63, 94, 0.1)', padding: '4px 12px', borderRadius: '20px', border: '1px solid rgba(244, 63, 94, 0.2)' }}>
-            Koleksi Terbaru
+            Koleksi Bebas Iklan
           </span>
           <h1 style={{ fontSize: '28px', fontWeight: '800', marginTop: '12px', color: '#f8fafc' }}>
-            Daftar Komik Populer
+            Jelajahi Manga & Doujin Terbaru
           </h1>
         </div>
 
@@ -101,8 +114,15 @@ export default function Home() {
           </div>
         )}
 
-        {/* Grid List */}
-        {!loading && (
+        {/* Jika Tidak Ada Data */}
+        {!loading && daftarKomik.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '60px 0', color: '#94a3b8', border: '1px dashed rgba(255, 255, 255, 0.1)', borderRadius: '16px' }}>
+            <p style={{ fontSize: '16px' }}>Komik tidak ditemukan atau server scraper sedang kendala.</p>
+          </div>
+        )}
+
+        {/* Grid Manga */}
+        {!loading && daftarKomik.length > 0 && (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '20px' }}>
             {daftarKomik.map((komik, index) => (
               <div 
@@ -114,13 +134,12 @@ export default function Home() {
                   border: '1px solid rgba(255, 255, 255, 0.08)',
                   boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
                   display: 'flex',
-                  flexDirection: 'column',
-                  cursor: 'pointer'
+                  flexDirection: 'column'
                 }}
               >
                 <div style={{ position: 'relative', width: '100%', aspectRatio: '2/3', backgroundColor: '#1e293b', overflow: 'hidden' }}>
                   <img 
-                    src={komik.thumb || komik.image || '/placeholder.png'} 
+                    src={komik.thumb || '/placeholder.png'} 
                     alt={komik.title} 
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                   />

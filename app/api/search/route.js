@@ -1,15 +1,17 @@
 import { NextResponse } from 'next/server';
 import { scrapeMangaList } from '../../../src/doujindesu.js';
 
-export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const query = searchParams.get('q') || '';
-
+export async function GET() {
   try {
-    // Kalau ada query ketikan pakai search, kalau kosong ambil list default
-    const data = await scrapeMangaList(query ? { query } : {});
+    // Memanggil scraper doujindesu untuk list manga utama
+    const data = await scrapeMangaList({});
 
-    const results = (data?.mangas || data?.list || data || []).map((item) => ({
+    // Ekstrak array dari berbagai kemungkinan struktur response scraper
+    const rawList = Array.isArray(data) 
+      ? data 
+      : (data?.mangas || data?.list || data?.data || []);
+
+    const results = rawList.map((item) => ({
       title: item.title || item.name || 'Tanpa Judul',
       thumb: item.thumb || item.image || item.cover || '',
       chapter: item.chapter || item.latestChapter || '',
@@ -19,7 +21,7 @@ export async function GET(request) {
 
     return NextResponse.json(results);
   } catch (error) {
-    console.error('API Error:', error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error('Manga fetch error:', error);
+    return NextResponse.json([], { status: 500 });
   }
 }
