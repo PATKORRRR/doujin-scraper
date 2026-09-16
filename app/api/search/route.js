@@ -1,27 +1,27 @@
 import { NextResponse } from 'next/server';
-import { scrapeMangaList } from '../../../src/doujindesu.js';
 
-export async function GET() {
+export async function GET(request) {
+  const { searchParams } = new URL(request.url);
+  const query = searchParams.get('q') || '';
+
   try {
-    // Memanggil scraper doujindesu untuk list manga utama
-    const data = await scrapeMangaList({});
+    // Kalau query kosong, ambil dari /manga. Kalau ada query, panggil pencarian
+    const targetUrl = query 
+      ? `https://gaktahu-ten.vercel.app/api/search?q=${encodeURIComponent(query)}`
+      : `https://gaktahu-ten.vercel.app/api/manga`;
 
-    // Ekstrak array dari berbagai kemungkinan struktur response scraper
-    const rawList = Array.isArray(data) 
-      ? data 
-      : (data?.mangas || data?.list || data?.data || []);
+    const res = await fetch(targetUrl, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+      },
+    });
 
-    const results = rawList.map((item) => ({
-      title: item.title || item.name || 'Tanpa Judul',
-      thumb: item.thumb || item.image || item.cover || '',
-      chapter: item.chapter || item.latestChapter || '',
-      type: item.type || 'Manga',
-      endpoint: item.endpoint || item.url || '',
-    }));
+    if (!res.ok) throw new Error('Gagal mengambil data dari sumber');
 
-    return NextResponse.json(results);
+    const data = await res.json();
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('Manga fetch error:', error);
+    console.error('Proxy Error:', error);
     return NextResponse.json([], { status: 500 });
   }
 }

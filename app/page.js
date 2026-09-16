@@ -5,21 +5,16 @@ export default function Home() {
   const [ketikan, setKetikan] = useState('');
   const [daftarKomik, setDaftarKomik] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [kategoriAktif, setKategoriAktif] = useState('Semua');
 
-  // Ambil komik saat pertama kali web dibuka
+  // Ambil data manga saat web pertama dibuka
   useEffect(() => {
-    loadManga();
+    fetchData('');
   }, []);
 
-  const loadManga = async (queryStr = '') => {
+  const fetchData = async (queryStr = '') => {
     setLoading(true);
     try {
-      const url = queryStr 
-        ? `/api/search?q=${encodeURIComponent(queryStr)}`
-        : '/api/manga';
-      
-      const res = await fetch(url);
+      const res = await fetch(`/api/search?q=${encodeURIComponent(queryStr)}`);
       const data = await res.json();
       setDaftarKomik(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -31,36 +26,25 @@ export default function Home() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    loadManga(ketikan);
+    fetchData(ketikan);
   };
 
-  // Filter daftar komik berdasarkan tab yang dipilih
-  const filteredKomik = daftarKomik.filter((item) => {
-    if (kategoriAktif === 'Semua') return true;
-    return (item.type || '').toLowerCase() === kategoriAktif.toLowerCase();
-  });
-
   return (
-    <div style={{ backgroundColor: '#12100e', color: '#f3f4f6', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif', paddingBottom: '70px' }}>
+    <div style={{ backgroundColor: '#12100e', color: '#f3f4f6', minHeight: '100vh', fontFamily: 'sans-serif', paddingBottom: '70px' }}>
       
-      {/* Container Utama */}
       <main style={{ maxWidth: '1000px', margin: '0 auto', padding: '24px 16px' }}>
         
-        {/* Header Judul */}
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <h1 style={{ fontSize: '32px', fontWeight: '800', margin: '0 0 8px 0', fontFamily: 'serif', letterSpacing: '-0.5px' }}>
-            Doujin & Manga
-          </h1>
-          <p style={{ color: '#9ca3af', fontSize: '14px', margin: 0 }}>
-            Koleksi doujin, manga, dan manhwa dari berbagai genre — diperbarui setiap jam.
-          </p>
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+          <h1 style={{ fontSize: '32px', fontWeight: '800', fontFamily: 'serif' }}>Doujin & Manga</h1>
+          <p style={{ color: '#9ca3af', fontSize: '14px' }}>Koleksi doujin, manga, dan manhwa dari berbagai genre.</p>
         </div>
 
-        {/* Form Pencarian */}
-        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '8px', marginBottom: '20px' }}>
+        {/* Fitur Search */}
+        <form onSubmit={handleSearch} style={{ display: 'flex', gap: '8px', marginBottom: '24px' }}>
           <input 
             type="text" 
-            placeholder="Cari komik, manga, manhwa..." 
+            placeholder="Cari komik favoritmu..." 
             value={ketikan}
             onChange={(e) => setKetikan(e.target.value)}
             style={{
@@ -70,14 +54,13 @@ export default function Home() {
               border: '1px solid #2a2723',
               backgroundColor: '#1c1917',
               color: '#fff',
-              fontSize: '14px',
               outline: 'none'
             }}
           />
           <button 
             type="submit" 
             style={{
-              padding: '12px 20px',
+              padding: '12px 24px',
               borderRadius: '12px',
               border: 'none',
               backgroundColor: '#e11d48',
@@ -90,109 +73,51 @@ export default function Home() {
           </button>
         </form>
 
-        {/* Filter Bar */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'center', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', backgroundColor: '#1c1917', padding: '4px', borderRadius: '14px', border: '1px solid #2a2723', gap: '4px' }}>
-            {['Semua', 'Doujinshi', 'Manga', 'Manhwa'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setKategoriAktif(tab)}
-                style={{
-                  padding: '8px 16px',
-                  borderRadius: '10px',
-                  border: 'none',
-                  backgroundColor: kategoriAktif === tab ? '#e11d48' : 'transparent',
-                  color: kategoriAktif === tab ? '#fff' : '#a1a1aa',
-                  fontWeight: '600',
-                  fontSize: '13px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s'
-                }}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
+        {/* Status Loading / Kosong */}
+        {loading && <p style={{ textAlign: 'center', color: '#a1a1aa' }}>⚡ Memuat data dari gaktahu-ten...</p>}
 
-          <button style={{ padding: '8px 16px', borderRadius: '12px', border: '1px solid #2a2723', backgroundColor: '#1c1917', color: '#d4d4d8', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            📍 Genre <span>⌄</span>
-          </button>
-
-          <button style={{ padding: '8px 16px', borderRadius: '12px', border: '1px solid #2a2723', backgroundColor: '#1c1917', color: '#d4d4d8', fontSize: '13px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px', marginLeft: 'auto' }}>
-            ⇄ Terbaru <span>⌄</span>
-          </button>
-        </div>
-
-        {/* Sub-header Genre */}
-        <div style={{ marginBottom: '16px' }}>
-          <h2 style={{ fontSize: '22px', fontWeight: 'bold', margin: '0 0 4px 0', fontFamily: 'serif' }}>
-            Genre [{kategoriAktif}]
-          </h2>
-          <p style={{ color: '#71717a', fontSize: '13px', margin: 0 }}>
-            Koleksi lengkap genre ini
-          </p>
-        </div>
-
-        {/* State Loading */}
-        {loading && (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: '#a1a1aa' }}>
-            <p>⚡ Memuat koleksi...</p>
-          </div>
+        {!loading && daftarKomik.length === 0 && (
+          <p style={{ textAlign: 'center', color: '#71717a' }}>Komik tidak ditemukan.</p>
         )}
 
-        {/* State Kosong */}
-        {!loading && filteredKomik.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: '#71717a', border: '1px dashed #2a2723', borderRadius: '16px' }}>
-            <p>Tidak ada komik yang ditemukan.</p>
-          </div>
-        )}
-
-        {/* Grid Card Komik (Mirip Gambar) */}
-        {!loading && filteredKomik.length > 0 && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px' }}>
-            {filteredKomik.map((komik, index) => (
+        {/* Grid Komik */}
+        {!loading && daftarKomik.length > 0 && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '16px' }}>
+            {daftarKomik.map((komik, index) => (
               <div 
-                key={index}
+                key={index} 
                 style={{
                   position: 'relative',
                   borderRadius: '16px',
                   overflow: 'hidden',
                   aspectRatio: '3/4',
                   backgroundColor: '#1c1917',
-                  border: '1px solid #2a2723',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.5)'
+                  border: '1px solid #2a2723'
                 }}
               >
-                {/* Gambar Sampul */}
                 <img 
-                  src={komik.thumb || '/placeholder.png'} 
-                  alt={komik.title}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  src={komik.thumb || komik.image || '/placeholder.png'} 
+                  alt={komik.title || komik.name} 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
                 />
+                
+                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, transparent 60%)' }} />
 
-                {/* Overlay Gradien Bawah */}
-                <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 50%, rgba(0,0,0,0.4) 100%)' }} />
-
-                {/* Badge Atas: Type & Rating */}
-                <div style={{ position: 'absolute', top: '10px', left: '10px', right: '10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '10px', fontWeight: 'bold', padding: '3px 8px', borderRadius: '6px', backdropFilter: 'blur(4px)', textTransform: 'uppercase' }}>
+                <div style={{ position: 'absolute', top: '10px', left: '10px', right: '10px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: '#fff', fontSize: '10px', padding: '2px 6px', borderRadius: '4px' }}>
                     {komik.type || 'MANHWA'}
                   </span>
-                  <span style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: '#fbbf24', fontSize: '11px', fontWeight: 'bold', padding: '3px 8px', borderRadius: '6px', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                    ★ {komik.rating || '8.8'}
-                  </span>
-                </div>
-
-                {/* Judul & Chapter Bawah */}
-                <div style={{ position: 'absolute', bottom: '12px', left: '12px', right: '12px' }}>
-                  <h3 style={{ fontSize: '13px', fontWeight: '700', color: '#fff', margin: '0 0 4px 0', lineHeight: '1.3', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                    {komik.title}
-                  </h3>
-                  {komik.chapter && (
-                    <span style={{ fontSize: '11px', color: '#f43f5e', fontWeight: '600' }}>
-                      {komik.chapter}
+                  {komik.rating && (
+                    <span style={{ backgroundColor: 'rgba(0,0,0,0.6)', color: '#fbbf24', fontSize: '10px', padding: '2px 6px', borderRadius: '4px' }}>
+                      ★ {komik.rating}
                     </span>
                   )}
+                </div>
+
+                <div style={{ position: 'absolute', bottom: '10px', left: '10px', right: '10px' }}>
+                  <h3 style={{ fontSize: '12px', fontWeight: 'bold', color: '#fff', margin: 0, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {komik.title || komik.name}
+                  </h3>
                 </div>
               </div>
             ))}
@@ -200,26 +125,6 @@ export default function Home() {
         )}
 
       </main>
-
-      {/* Bottom Navigation Bar */}
-      <nav style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: '60px', backgroundColor: '#12100e', borderTop: '1px solid #2a2723', display: 'flex', justifyContent: 'space-around', alignItems: 'center', zIndex: 100 }}>
-        <button style={{ background: 'none', border: 'none', color: '#71717a', fontSize: '11px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', cursor: 'pointer' }}>
-          🏠 <span>Beranda</span>
-        </button>
-        <button style={{ background: 'none', border: 'none', color: '#e11d48', fontSize: '11px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', cursor: 'pointer', fontWeight: 'bold' }}>
-          📖 <span>Doujin</span>
-        </button>
-        <button style={{ background: 'none', border: 'none', color: '#71717a', fontSize: '11px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', cursor: 'pointer' }}>
-          🐱 <span>Neko</span>
-        </button>
-        <button style={{ background: 'none', border: 'none', color: '#71717a', fontSize: '11px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', cursor: 'pointer' }}>
-          🎥 <span>Porno</span>
-        </button>
-        <button style={{ background: 'none', border: 'none', color: '#71717a', fontSize: '11px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px', cursor: 'pointer' }}>
-          📺 <span>Hentai</span>
-        </button>
-      </nav>
-
     </div>
   );
 }
