@@ -1,7 +1,7 @@
 {
   "name": "doujin-scraper",
   "version": "1.0.1",
-  "description": "Standalone data-collection modules for manga / video cataloging sources. Zero-dependency ESM, runs on Node.js >= 18.17, Bun, Deno, or any JS runtime with global fetch.",
+  "description": "Standalone data-collection modules for manga / video cataloging sources.",
   "type": "module",
   "main": "src/index.js",
   "exports": {
@@ -23,8 +23,16 @@
     "node": ">=18.17"
   },
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "test": "node test/import.test.mjs && node test/crypto.test.mjs && node test/smoke.mjs",
     "example": "node examples/basic.js"
+  },
+  "dependencies": {
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest"
   },
   "keywords": [
     "scraper",
