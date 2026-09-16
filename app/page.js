@@ -1,17 +1,20 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
   const [ketikan, setKetikan] = useState('');
   const [daftarKomik, setDaftarKomik] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const cariKomik = async (e) => {
-    e.preventDefault();
-    if (!ketikan) return;
+  // Ambil komik otomatis saat web pertama kali dibuka
+  useEffect(() => {
+    fetchKomik('');
+  }, []);
+
+  const fetchKomik = async (queryStr = '') => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(ketikan)}`);
+      const res = await fetch(`/api/search?q=${encodeURIComponent(queryStr)}`);
       const data = await res.json();
       setDaftarKomik(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -20,14 +23,18 @@ export default function Home() {
     setLoading(false);
   };
 
+  const cariKomik = (e) => {
+    e.preventDefault();
+    fetchKomik(ketikan);
+  };
+
   return (
     <div style={{ backgroundColor: '#090d16', color: '#f8fafc', minHeight: '100vh', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
       
-      {/* Top Navbar */}
+      {/* Header */}
       <header style={{ position: 'sticky', top: 0, zIndex: 50, backdropFilter: 'blur(12px)', backgroundColor: 'rgba(15, 23, 42, 0.8)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', padding: '12px 24px' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           
-          {/* Logo */}
           <a href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}>
             <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #f43f5e, #be123c)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', boxShadow: '0 0 15px rgba(244, 63, 94, 0.4)' }}>
               📚
@@ -37,7 +44,6 @@ export default function Home() {
             </span>
           </a>
 
-          {/* Form Pencarian */}
           <form onSubmit={cariKomik} style={{ display: 'flex', gap: '8px', width: '100%', maxWidth: '380px' }}>
             <input 
               type="text" 
@@ -69,7 +75,7 @@ export default function Home() {
                 boxShadow: '0 4px 12px rgba(244, 63, 94, 0.3)'
               }}
             >
-              {loading ? '...' : 'Cari'}
+              Cari
             </button>
           </form>
 
@@ -79,82 +85,68 @@ export default function Home() {
       {/* Main Container */}
       <main style={{ maxWidth: '1200px', margin: '0 auto', padding: '32px 20px' }}>
         
-        {/* Banner Title */}
         <div style={{ marginBottom: '32px' }}>
           <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#f43f5e', textTransform: 'uppercase', letterSpacing: '1px', backgroundColor: 'rgba(244, 63, 94, 0.1)', padding: '4px 12px', borderRadius: '20px', border: '1px solid rgba(244, 63, 94, 0.2)' }}>
-            Koleksi Bebas Iklan
+            Koleksi Terbaru
           </span>
           <h1 style={{ fontSize: '28px', fontWeight: '800', marginTop: '12px', color: '#f8fafc' }}>
-            Jelajahi Manga & Doujin Terbaru
+            Daftar Komik Populer
           </h1>
-          <p style={{ color: '#94a3b8', fontSize: '14px', marginTop: '4px' }}>
-            Ketik kata kunci komik favoritmu di kolom pencarian di atas.
-          </p>
         </div>
 
-        {/* State Kosong / Loading */}
+        {/* Loading State */}
         {loading && (
           <div style={{ textAlign: 'center', padding: '60px 0', color: '#94a3b8' }}>
-            <p style={{ fontSize: '18px' }}>⚡ Sedang mengambil data komik...</p>
+            <p style={{ fontSize: '18px' }}>⚡ Memuat daftar komik...</p>
           </div>
         )}
 
-        {!loading && daftarKomik.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '60px 0', color: '#64748b', backgroundColor: '#0f172a', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.1)' }}>
-            <p style={{ fontSize: '16px' }}>Hasil pencarian akan tampil di sini.</p>
-          </div>
-        )}
-
-        {/* Grid Card List */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '20px' }}>
-          {daftarKomik.map((komik, index) => (
-            <div 
-              key={index} 
-              style={{
-                backgroundColor: '#0f172a',
-                borderRadius: '16px',
-                overflow: 'hidden',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
-                display: 'flex',
-                flexDirection: 'column',
-                transition: 'transform 0.2s ease',
-                cursor: 'pointer'
-              }}
-            >
-              {/* Thumbnail Container */}
-              <div style={{ position: 'relative', width: '100%', aspectRatio: '2/3', backgroundColor: '#1e293b', overflow: 'hidden' }}>
-                <img 
-                  src={komik.thumb || komik.image || '/placeholder.png'} 
-                  alt={komik.title} 
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
-                />
-                
-                {/* Overlay Type Badge */}
-                {komik.type && (
-                  <span style={{ position: 'absolute', top: '8px', left: '8px', backgroundColor: 'rgba(15, 23, 42, 0.85)', color: '#38bdf8', fontSize: '10px', fontWeight: 'bold', padding: '3px 8px', borderRadius: '6px', backdropFilter: 'blur(4px)', textTransform: 'uppercase' }}>
-                    {komik.type}
-                  </span>
-                )}
-              </div>
-
-              {/* Title & Info */}
-              <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flexGrow: 1 }}>
-                <h3 style={{ fontSize: '13px', fontWeight: '600', margin: '0 0 8px 0', color: '#f1f5f9', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                  {komik.title}
-                </h3>
-                
-                {komik.chapter && (
-                  <div style={{ marginTop: 'auto' }}>
-                    <span style={{ fontSize: '11px', color: '#f43f5e', fontWeight: '600', backgroundColor: 'rgba(244, 63, 94, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>
-                      {komik.chapter}
+        {/* Grid List */}
+        {!loading && (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '20px' }}>
+            {daftarKomik.map((komik, index) => (
+              <div 
+                key={index} 
+                style={{
+                  backgroundColor: '#0f172a',
+                  borderRadius: '16px',
+                  overflow: 'hidden',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  cursor: 'pointer'
+                }}
+              >
+                <div style={{ position: 'relative', width: '100%', aspectRatio: '2/3', backgroundColor: '#1e293b', overflow: 'hidden' }}>
+                  <img 
+                    src={komik.thumb || komik.image || '/placeholder.png'} 
+                    alt={komik.title} 
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  />
+                  {komik.type && (
+                    <span style={{ position: 'absolute', top: '8px', left: '8px', backgroundColor: 'rgba(15, 23, 42, 0.85)', color: '#38bdf8', fontSize: '10px', fontWeight: 'bold', padding: '3px 8px', borderRadius: '6px', backdropFilter: 'blur(4px)', textTransform: 'uppercase' }}>
+                      {komik.type}
                     </span>
-                  </div>
-                )}
+                  )}
+                </div>
+
+                <div style={{ padding: '12px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', flexGrow: 1 }}>
+                  <h3 style={{ fontSize: '13px', fontWeight: '600', margin: '0 0 8px 0', color: '#f1f5f9', lineHeight: '1.4', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {komik.title}
+                  </h3>
+                  {komik.chapter && (
+                    <div style={{ marginTop: 'auto' }}>
+                      <span style={{ fontSize: '11px', color: '#f43f5e', fontWeight: '600', backgroundColor: 'rgba(244, 63, 94, 0.1)', padding: '2px 6px', borderRadius: '4px' }}>
+                        {komik.chapter}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        )}
 
       </main>
     </div>
