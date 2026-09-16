@@ -1,38 +1,22 @@
 import { NextResponse } from 'next/server';
+import { scrapeMangaList, searchManga } from '@/src/doujindesu.js';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q') || '';
 
   try {
-    // 1. Import modul scraper secara dinamis
-    const scraper = await import('../../../src/doujindesu.js').catch(async () => {
-      // Fallback jika path ../.. salah
-      return await import('../../src/doujindesu.js');
-    });
-
     let rawData = [];
 
-    // 2. Cek fungsi pencarian atau list yang tersedia di modul
+    // Jika ada kata kunci pencarian
     if (query) {
-      if (typeof scraper.searchManga === 'function') {
-        rawData = await scraper.searchManga(query);
-      } else if (typeof scraper.search === 'function') {
-        rawData = await scraper.search(query);
-      } else if (typeof scraper.default === 'function') {
-        rawData = await scraper.default(query);
-      }
+      rawData = await searchManga(query);
     } else {
-      if (typeof scraper.scrapeMangaList === 'function') {
-        rawData = await scraper.scrapeMangaList({});
-      } else if (typeof scraper.getLatest === 'function') {
-        rawData = await scraper.getLatest();
-      } else if (typeof scraper.latest === 'function') {
-        rawData = await scraper.latest();
-      }
+      // Tampilan awal (landing page)
+      rawData = await scrapeMangaList({});
     }
 
-    // 3. Normalisasi hasil response
+    // Normalisasi struktur data dari scraper
     const list = Array.isArray(rawData)
       ? rawData
       : rawData?.mangas || rawData?.list || rawData?.data || rawData?.results || [];
@@ -48,7 +32,7 @@ export async function GET(request) {
 
     return NextResponse.json(results);
   } catch (error) {
-    console.error('API Error Details:', error);
+    console.error('API Scraper Error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
