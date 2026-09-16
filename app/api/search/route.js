@@ -1,27 +1,38 @@
 import { NextResponse } from 'next/server';
+import { scrapeMangaList, searchManga } from '../../../src/doujindesu.js';
 
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get('q') || '';
 
   try {
-    // Kalau query kosong, ambil dari /manga. Kalau ada query, panggil pencarian
-    const targetUrl = query 
-      ? `https://gaktahu-ten.vercel.app/api/search?q=${encodeURIComponent(query)}`
-      : `https://gaktahu-ten.vercel.app/api/manga`;
+    let rawData;
 
-    const res = await fetch(targetUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0',
-      },
-    });
+    // Jika pengguna melakukan pencarian
+    if (query) {
+      rawData = await searchManga(query);
+    } else {
+      // Jika pertama kali dibuka (mengambil list awal)
+      rawData = await scrapeMangaList({});
+    }
 
-    if (!res.ok) throw new Error('Gagal mengambil data dari sumber');
+    // Normalisasi struktur data
+    const list = Array.isArray(rawData)
+      ? rawData
+      : rawData?.mangas || rawData?.list || rawData?.data || [];
 
-    const data = await res.json();
-    return NextResponse.json(data);
+    const results = list.map((item) => ({
+      title: item.title || item.name || 'Tanpa Judul',
+      thumb: item.thumb || item.image || item.cover || '',
+      type: item.type || 'MANHWA',
+      rating: item.rating || '8.8',
+      chapter: item.chapter || item.latestChapter || '',
+      endpoint: item.endpoint || item.url || '',
+    }));
+
+    return NextResponse.json(results);
   } catch (error) {
-    console.error('Proxy Error:', error);
+    console.error('API Error:', error);
     return NextResponse.json([], { status: 500 });
   }
 }
